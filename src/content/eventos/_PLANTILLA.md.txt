@@ -1,0 +1,47 @@
+---
+# ===== PLANTILLA DE EVENTO =====
+# Copiá este archivo, renombralo (ej: rolleada-costanera.md) y completá.
+# El nombre del archivo es la URL: /eventos/rolleada-costanera
+# Solo titulo, disciplinas, tipo, fecha y lugar son obligatorios.
+
+titulo: Nombre del evento
+disciplinas: [rollers]          # rollers | skate | bmx | bici | scooter | running | otro (una o varias)
+tipo: rolleada                  # rolleada | salida | encuentro | jam | competencia | clase | festival | exhibicion | (o cualquier texto)
+etiquetas: [nocturna, slalom]   # libres, para buscar/filtrar
+
+fecha: 2026-10-10               # AAAA-MM-DD
+# fechaFin: 2026-10-11          # si dura más de un día
+hora: "20:00"                   # entre comillas
+# horaFin: "22:00"
+# repite:                       # para eventos fijos
+#   frecuencia: semanal         # semanal | quincenal | mensual
+#   hasta: 2026-12-31           # opcional
+
+lugar:
+  nombre: Planetario
+  direccion: Av. Sarmiento y Belisario Roldán   # opcional
+  ciudad: CABA
+  provincia: Buenos Aires                        # opcional
+  # mapa: https://maps.app.goo.gl/...            # opcional; si no, se arma solo
+
+organiza:                       # opcional
+  nombre: Nombre del grupo
+  instagram: usuario
+contacto:                       # opcional
+  whatsapp: "5491100000000"
+  instagram: usuario
+  # web: https://...
+# inscripcion: https://...      # link de inscripción si hay
+
+nivel: [todos]                  # todos | principiante | intermedio | avanzado
+costo: Gratis
+estado: confirmado              # confirmado | a-confirmar | suspendido
+destacado: false
+# imagen: /flyers/archivo.jpg   # poné el archivo en public/flyers/
+
+datos:                          # cualquier otro dato, en formato "Nombre: valor"
+  Recorrido: 15 km
+  Equipo: Casco obligatorio
+---
+
+Descripción libre del evento. Se puede usar **negrita**, listas, links, etc.

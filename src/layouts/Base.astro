@@ -1,0 +1,178 @@
+---
+import '@fontsource/anton/400.css';
+import '@fontsource/permanent-marker/400.css';
+import '@fontsource-variable/inter';
+import '../styles/global.css';
+import Logo from '../components/Logo.astro';
+import { SITIO } from '../data/sitio';
+
+interface Props {
+  titulo?: string;
+  descripcion?: string;
+}
+
+const { titulo, descripcion = `Rolleadas, salidas, jams y encuentros de la cultura freestyle. ${SITIO.lema}` } = Astro.props;
+const tituloCompleto = titulo ? `${titulo} · ${SITIO.nombre}` : `${SITIO.nombre} · ¿Qué hay?`;
+const ruta = Astro.url.pathname.replace(/\/$/, '') || '/';
+
+const nav = [
+  { href: '/', label: 'Eventos', icono: 'M4 6h16M4 12h16M4 18h10', activo: ruta === '/' || ruta.startsWith('/eventos') },
+  { href: '/calendario', label: 'Calendario', icono: 'M4 7h16v13H4zM4 11h16M9 4v5M15 4v5', activo: ruta === '/calendario' },
+  { href: '/sumar', label: 'Sumá tu evento', icono: 'M12 5v14M5 12h14', activo: ruta === '/sumar' },
+];
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#111111" />
+    <title>{tituloCompleto}</title>
+    <meta name="description" content={descripcion} />
+    <meta property="og:title" content={tituloCompleto} />
+    <meta property="og:description" content={descripcion} />
+    <meta property="og:type" content="website" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+  </head>
+  <body>
+    <header class="cabecera">
+      <div class="contenedor cabecera__fila">
+        <a href="/" class="cabecera__logo"><Logo /></a>
+        <nav class="nav-desktop" aria-label="Principal">
+          {nav.map((n) => (
+            <a href={n.href} aria-current={n.activo ? 'page' : undefined}>{n.label}</a>
+          ))}
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <slot />
+    </main>
+
+    <footer class="pie contenedor">
+      <p class="marker">{SITIO.lema}</p>
+      <p>Hecho por y para la escena. ¿Falta algo? <a href="/sumar">Sumalo</a>.</p>
+    </footer>
+
+    <nav class="nav-mobile" aria-label="Principal">
+      {nav.map((n) => (
+        <a href={n.href} aria-current={n.activo ? 'page' : undefined}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d={n.icono} /></svg>
+          <span>{n.label === 'Sumá tu evento' ? 'Sumá' : n.label}</span>
+        </a>
+      ))}
+    </nav>
+  </body>
+</html>
+
+<style>
+  .cabecera {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: rgb(17 17 17 / 0.88);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid #222;
+    padding-top: env(safe-area-inset-top);
+  }
+  .cabecera__fila {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 60px;
+    padding-block: 8px;
+  }
+  .cabecera__logo {
+    text-decoration: none;
+    display: inline-flex;
+    padding: 4px 0;
+  }
+
+  .nav-desktop {
+    display: none;
+    gap: 6px;
+  }
+  .nav-desktop a {
+    color: var(--texto);
+    text-decoration: none;
+    font-weight: 600;
+    padding: 8px 14px;
+    border-radius: 999px;
+  }
+  .nav-desktop a[aria-current='page'] {
+    background: var(--azul);
+    color: var(--negro);
+  }
+
+  .nav-mobile {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 30;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    height: calc(var(--nav-alto) + env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
+    background: rgb(17 17 17 / 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-top: 1px solid #262626;
+  }
+  .nav-mobile a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    color: var(--texto-suave);
+    text-decoration: none;
+    font-size: 11.5px;
+    font-weight: 600;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .nav-mobile svg {
+    width: 24px;
+    height: 24px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .nav-mobile a[aria-current='page'] {
+    color: var(--azul);
+  }
+  .nav-mobile a[href='/sumar'] svg {
+    background: var(--rosa);
+    color: var(--negro);
+    border-radius: 8px;
+    padding: 3px;
+    width: 28px;
+    height: 28px;
+  }
+
+  .pie {
+    margin-top: 48px;
+    padding-block: 24px 32px;
+    border-top: 1px solid #222;
+    color: var(--texto-suave);
+    font-size: 14px;
+  }
+  .pie .marker {
+    color: var(--texto);
+    font-size: 17px;
+    margin: 0 0 4px;
+  }
+
+  @media (min-width: 900px) {
+    .nav-desktop {
+      display: flex;
+    }
+    .nav-mobile {
+      display: none;
+    }
+  }
+</style>

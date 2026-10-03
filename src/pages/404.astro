@@ -1,0 +1,29 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base titulo="No encontrado">
+  <div class="contenedor nf">
+    <p class="marker">Uy, te caíste.</p>
+    <h1>Esta página no existe</h1>
+    <a class="btn btn--azul" href="/">Ver qué hay</a>
+  </div>
+</Base>
+
+<style>
+  .nf {
+    text-align: center;
+    padding-block: 64px;
+    display: grid;
+    gap: 16px;
+    justify-items: center;
+  }
+  .nf .marker {
+    color: var(--rosa);
+    font-size: 26px;
+    margin: 0;
+  }
+  h1 {
+    font-size: 44px;
+  }
+</style>

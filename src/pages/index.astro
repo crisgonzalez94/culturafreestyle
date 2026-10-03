@@ -1,0 +1,227 @@
+---
+import Base from '../layouts/Base.astro';
+import Logo from '../components/Logo.astro';
+import EventoCard from '../components/EventoCard.astro';
+import { DISCIPLINAS, type DisciplinaId } from '../data/disciplinas';
+import { obtenerOcurrencias, type Ocurrencia } from '../lib/eventos';
+import { fechaCorta } from '../lib/fechas';
+
+const ocurrencias = await obtenerOcurrencias();
+
+const porDia = new Map<string, Ocurrencia[]>();
+for (const o of ocurrencias) porDia.set(o.fecha, [...(porDia.get(o.fecha) ?? []), o]);
+
+// Solo mostramos chips de disciplinas que tienen eventos.
+const presentes = new Set(ocurrencias.flatMap((o) => o.evento.disciplinas));
+const disciplinas = (Object.keys(DISCIPLINAS) as DisciplinaId[]).filter((d) => presentes.has(d));
+
+const cuando = [
+  { id: 'todo', label: 'Todo' },
+  { id: 'hoy', label: 'Hoy' },
+  { id: 'finde', label: 'Este finde' },
+  { id: 'mes', label: 'Este mes' },
+];
+---
+
+<Base>
+  <section class="hero contenedor">
+    <Logo tamano="grande" />
+    <p class="hero__pregunta">
+      Quiero salir a hacer algo. <span class="trazo">¿Qué hay?</span>
+    </p>
+  </section>
+
+  <div class="filtros">
+    <div class="contenedor">
+      <div class="chips" role="group" aria-label="Cuándo">
+        {cuando.map((c, i) => (
+          <button class="chip" type="button" data-cuando={c.id} aria-pressed={i === 0 ? 'true' : 'false'}>
+            {c.label}
+          </button>
+        ))}
+      </div>
+      <div class="chips" role="group" aria-label="Disciplina">
+        <button class="chip" type="button" data-disciplina="" data-acento="pink" aria-pressed="true">Todas</button>
+        {disciplinas.map((d) => (
+          <button class="chip" type="button" data-disciplina={d} data-acento={DISCIPLINAS[d].acento} aria-pressed="false">
+            {DISCIPLINAS[d].emoji} {DISCIPLINAS[d].nombre}
+          </button>
+        ))}
+      </div>
+    </div>
+  </div>
+
+  <div class="contenedor">
+    <p class="conteo" aria-live="polite" id="conteo"></p>
+
+    <div id="lista">
+      {[...porDia].map(([fecha, items]) => (
+        <section class="dia" data-fecha={fecha}>
+          <h2 class="dia__titulo">
+            <span class="dia__fecha">{fechaCorta(fecha)}</span>
+            <span class="dia__rel marker"></span>
+          </h2>
+          <div class="grilla">
+            {items.map((o) => <EventoCard o={o} />)}
+          </div>
+        </section>
+      ))}
+    </div>
+
+    <div class="vacio" id="vacio" hidden>
+      <p class="marker">Nada por acá… todavía.</p>
+      <p>Probá con otro filtro, o si sabés de algo que se viene, contanos.</p>
+      <a class="btn btn--rosa" href="/sumar">Sumá un evento</a>
+    </div>
+  </div>
+</Base>
+
+<script>
+  import { finDeMes, hoyLocal, rangoFinde, sumarDias } from '../lib/fechas';
+
+  const hoy = hoyLocal();
+  const manana = sumarDias(hoy, 1);
+  const params = new URLSearchParams(location.search);
+  const estado = { cuando: params.get('cuando') ?? 'todo', disciplina: params.get('d') ?? '' };
+
+  const rangos: Record<string, [string, string]> = {
+    todo: [hoy, '9999-12-31'],
+    hoy: [hoy, hoy],
+    finde: rangoFinde(hoy),
+    mes: [hoy, finDeMes(hoy)],
+  };
+
+  const cards = [...document.querySelectorAll<HTMLElement>('.card')];
+  const dias = [...document.querySelectorAll<HTMLElement>('.dia')];
+  const conteo = document.getElementById('conteo')!;
+  const vacio = document.getElementById('vacio')!;
+
+  // Etiquetas relativas: "Hoy", "Mañana", "En curso".
+  for (const dia of dias) {
+    const f = dia.dataset.fecha!;
+    const rel = dia.querySelector('.dia__rel')!;
+    rel.textContent = f === hoy ? 'Hoy' : f === manana ? 'Mañana' : f < hoy ? 'En curso' : '';
+  }
+
+  function aplicar() {
+    const [desde, hasta] = rangos[estado.cuando] ?? rangos.todo;
+    let visibles = 0;
+    // Los eventos recurrentes se muestran una sola vez: en su próxima fecha dentro del rango.
+    const yaMostrados = new Set<string>();
+
+    for (const card of cards) {
+      const enRango = card.dataset.fin! >= desde && card.dataset.fecha! <= hasta;
+      const deDisciplina = !estado.disciplina || card.dataset.disciplinas!.split(' ').includes(estado.disciplina);
+      card.hidden = !(enRango && deDisciplina) || yaMostrados.has(card.dataset.slug!);
+      if (!card.hidden) {
+        yaMostrados.add(card.dataset.slug!);
+        visibles++;
+      }
+    }
+    for (const dia of dias) dia.hidden = !dia.querySelector('.card:not([hidden])');
+
+    conteo.textContent = visibles === 1 ? '1 plan' : `${visibles} planes`;
+    vacio.hidden = visibles > 0;
+
+    document.querySelectorAll<HTMLButtonElement>('[data-cuando]').forEach((b) =>
+      b.setAttribute('aria-pressed', String(b.dataset.cuando === estado.cuando)),
+    );
+    document.querySelectorAll<HTMLButtonElement>('[data-disciplina]').forEach((b) =>
+      b.setAttribute('aria-pressed', String(b.dataset.disciplina === estado.disciplina)),
+    );
+
+    const q = new URLSearchParams();
+    if (estado.cuando !== 'todo') q.set('cuando', estado.cuando);
+    if (estado.disciplina) q.set('d', estado.disciplina);
+    history.replaceState(null, '', q.size ? `?${q}` : location.pathname);
+  }
+
+  document.querySelectorAll<HTMLButtonElement>('[data-cuando]').forEach((b) =>
+    b.addEventListener('click', () => {
+      estado.cuando = b.dataset.cuando!;
+      aplicar();
+    }),
+  );
+  document.querySelectorAll<HTMLButtonElement>('[data-disciplina]').forEach((b) =>
+    b.addEventListener('click', () => {
+      estado.disciplina = b.dataset.disciplina!;
+      aplicar();
+    }),
+  );
+
+  aplicar();
+</script>
+
+<style>
+  .hero {
+    padding-block: 36px 20px;
+    text-align: center;
+  }
+  .hero__pregunta {
+    margin: 26px 0 0;
+    font-size: 19px;
+    color: var(--texto-suave);
+  }
+  .hero__pregunta .trazo {
+    color: var(--texto);
+    font-family: var(--f-marker);
+    font-size: 24px;
+  }
+
+  .filtros {
+    position: sticky;
+    top: calc(60px + env(safe-area-inset-top));
+    z-index: 10;
+    background: rgb(17 17 17 / 0.92);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding-block: 6px;
+    border-bottom: 1px solid #1f1f1f;
+  }
+
+  .conteo {
+    margin: 14px 0 0;
+    color: var(--texto-suave);
+    font-size: 14px;
+  }
+
+  .dia {
+    margin-top: 22px;
+  }
+  .dia__titulo {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    font-size: 28px;
+    margin-bottom: 14px;
+  }
+  .dia__rel {
+    font-size: 17px;
+    color: var(--rosa);
+  }
+  .grilla {
+    display: grid;
+    gap: 16px;
+  }
+  @media (min-width: 640px) {
+    .grilla {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  @media (min-width: 1000px) {
+    .grilla {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  .vacio {
+    text-align: center;
+    padding: 48px 0;
+    color: var(--texto-suave);
+  }
+  .vacio .marker {
+    font-size: 24px;
+    color: var(--texto);
+    margin: 0;
+  }
+</style>

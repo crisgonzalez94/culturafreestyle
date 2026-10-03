@@ -1,0 +1,240 @@
+---
+import Base from '../layouts/Base.astro';
+import { DISCIPLINAS, TIPOS } from '../data/disciplinas';
+import { SITIO } from '../data/sitio';
+---
+
+<Base titulo="Sumá tu evento" descripcion="Contanos de una rolleada, salida, jam o encuentro para sumarla a Cultura Freestyle.">
+  <div class="contenedor sumar">
+    <h1>Sumá tu <span class="trazo">evento</span></h1>
+    <p class="intro">
+      ¿Organizás una rolleada, una salida, un jam o un encuentro? ¿Viste un flyer que tendría que estar acá? Completá lo que sepas
+      y nos llega el mensaje. Nosotros lo cargamos.
+    </p>
+
+    <form id="form" class="form" novalidate>
+      <label>
+        <span>Nombre del evento *</span>
+        <input name="Evento" required placeholder="Rolleada nocturna por la Costanera" />
+      </label>
+
+      <fieldset>
+        <legend>Disciplina *</legend>
+        <div class="opciones">
+          {Object.values(DISCIPLINAS).map((d) => (
+            <label class="opcion">
+              <input type="checkbox" name="Disciplina" value={d.nombre} />
+              <span>{d.emoji} {d.nombre}</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
+      <label>
+        <span>Tipo</span>
+        <select name="Tipo">
+          <option value="">Elegí uno…</option>
+          {Object.values(TIPOS).map((t) => <option>{t}</option>)}
+          <option>Otro</option>
+        </select>
+      </label>
+
+      <div class="fila">
+        <label>
+          <span>Fecha *</span>
+          <input type="date" name="Fecha" required />
+        </label>
+        <label>
+          <span>Hora</span>
+          <input type="time" name="Hora" />
+        </label>
+      </div>
+
+      <label class="check">
+        <input type="checkbox" name="Se repite" value="Sí" />
+        <span>Se repite (todas las semanas, cada dos semanas…)</span>
+      </label>
+
+      <label>
+        <span>Lugar *</span>
+        <input name="Lugar" required placeholder="Plaza, parque, skatepark, dirección…" />
+      </label>
+      <label>
+        <span>Ciudad</span>
+        <input name="Ciudad" placeholder="CABA, Rosario, Córdoba…" />
+      </label>
+      <label>
+        <span>Quién organiza</span>
+        <input name="Organiza" placeholder="Grupo, club o persona" />
+      </label>
+      <label>
+        <span>Link (Instagram, flyer, inscripción)</span>
+        <input type="url" name="Link" inputmode="url" placeholder="https://instagram.com/…" />
+      </label>
+      <label>
+        <span>Algo más que haya que saber</span>
+        <textarea name="Detalles" rows="4" placeholder="Nivel, costo, recorrido, qué llevar…"></textarea>
+      </label>
+
+      <p class="error" id="error" role="alert" hidden></p>
+
+      <div class="enviar">
+        {SITIO.whatsapp && <button class="btn btn--rosa" type="submit" value="whatsapp">Enviar por WhatsApp</button>}
+        {SITIO.email && <button class="btn" type="submit" value="email">Enviar por mail</button>}
+        <button class:list={['btn', { 'btn--rosa': !SITIO.whatsapp }]} type="submit" value="copiar">Copiar mensaje</button>
+      </div>
+      {SITIO.instagram && (
+        <p class="nota">
+          También podés mandarlo por DM a <a href={`https://instagram.com/${SITIO.instagram}`} target="_blank" rel="noopener">@{SITIO.instagram}</a>.
+        </p>
+      )}
+    </form>
+  </div>
+</Base>
+
+<script define:vars={{ whatsapp: SITIO.whatsapp, email: SITIO.email }}>
+  const form = document.getElementById('form');
+  const error = document.getElementById('error');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const datos = new FormData(form);
+    const faltan = [];
+    if (!datos.get('Evento')) faltan.push('nombre');
+    if (!datos.getAll('Disciplina').length) faltan.push('disciplina');
+    if (!datos.get('Fecha')) faltan.push('fecha');
+    if (!datos.get('Lugar')) faltan.push('lugar');
+    if (faltan.length) {
+      error.textContent = `Falta completar: ${faltan.join(', ')}.`;
+      error.hidden = false;
+      return;
+    }
+    error.hidden = true;
+
+    const lineas = ['¡Hola! Quiero sumar un evento a Cultura Freestyle:', ''];
+    for (const clave of new Set(datos.keys())) {
+      const valor = datos.getAll(clave).filter(Boolean).join(', ');
+      if (valor) lineas.push(`• ${clave}: ${valor}`);
+    }
+    const mensaje = lineas.join('\n');
+    const via = e.submitter?.value;
+
+    if (via === 'whatsapp') {
+      window.open(`https://wa.me/${whatsapp}?text=${encodeURIComponent(mensaje)}`, '_blank');
+    } else if (via === 'email') {
+      location.href = `mailto:${email}?subject=${encodeURIComponent('Nuevo evento: ' + datos.get('Evento'))}&body=${encodeURIComponent(mensaje)}`;
+    } else {
+      await navigator.clipboard.writeText(mensaje);
+      e.submitter.textContent = '¡Copiado! Pegalo donde quieras';
+    }
+  });
+</script>
+
+<style>
+  .sumar {
+    max-width: 640px;
+    padding-top: 24px;
+  }
+  h1 {
+    font-size: clamp(40px, 12vw, 60px);
+  }
+  .intro {
+    color: var(--texto-suave);
+    margin: 18px 0 24px;
+  }
+  .form {
+    display: grid;
+    gap: 16px;
+  }
+  label,
+  fieldset {
+    display: grid;
+    gap: 6px;
+    font-weight: 600;
+    font-size: 14.5px;
+  }
+  fieldset {
+    border: 0;
+    padding: 0;
+    margin: 0;
+  }
+  legend {
+    padding: 0;
+    margin-bottom: 6px;
+  }
+  input:not([type='checkbox']),
+  select,
+  textarea {
+    width: 100%;
+    min-height: 48px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 2px solid var(--borde);
+    background: var(--superficie);
+    color: var(--texto);
+    font: 400 16px/1.4 var(--f-texto); /* 16px evita el zoom en iOS */
+  }
+  input:focus,
+  select:focus,
+  textarea:focus {
+    border-color: var(--azul);
+    outline: none;
+  }
+  .fila {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 12px;
+  }
+  .opciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .opcion {
+    display: inline-flex;
+    position: relative;
+  }
+  .opcion input {
+    position: absolute;
+    opacity: 0;
+  }
+  .opcion span {
+    padding: 9px 14px;
+    border-radius: 999px;
+    border: 2px solid var(--borde);
+    background: var(--superficie);
+    cursor: pointer;
+  }
+  .opcion input:checked + span {
+    background: var(--azul);
+    border-color: var(--azul);
+    color: var(--negro);
+  }
+  .opcion input:focus-visible + span {
+    outline: 3px solid var(--azul);
+    outline-offset: 2px;
+  }
+  .check {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 500;
+  }
+  .check input {
+    width: 22px;
+    height: 22px;
+    accent-color: var(--rosa);
+  }
+  .error {
+    color: #ff8a9f;
+    margin: 0;
+  }
+  .enviar {
+    display: grid;
+    gap: 10px;
+  }
+  .nota {
+    color: var(--texto-suave);
+    font-size: 14px;
+  }
+</style>

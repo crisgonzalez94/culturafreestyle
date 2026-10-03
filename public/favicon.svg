@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="14" fill="#111111"/>
+  <path d="M20 14 L24 7 L30 13 L34 6 L38 13 L44 7 L46 14" fill="none" stroke="#69D2FF" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="9" y="49" font-family="Impact, 'Arial Black', sans-serif" font-style="italic" font-size="34" fill="#69D2FF">C</text>
+  <text x="30" y="49" font-family="Impact, 'Arial Black', sans-serif" font-style="italic" font-size="34" fill="#FF4FA3">F</text>
+  <text x="7" y="47" font-family="Impact, 'Arial Black', sans-serif" font-style="italic" font-size="34" fill="#FFFFFF">C</text>
+  <text x="28" y="47" font-family="Impact, 'Arial Black', sans-serif" font-style="italic" font-size="34" fill="#FFFFFF">F</text>
+  <path d="M10 54 Q32 50 54 52" fill="none" stroke="#FF4FA3" stroke-width="3" stroke-linecap="round"/>
+</svg>
