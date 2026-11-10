@@ -33,13 +33,16 @@ const nav = [
     <meta property="og:title" content={tituloCompleto} />
     <meta property="og:description" content={descripcion} />
     <meta property="og:type" content="website" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta property="og:image" content={new URL('/og.png', Astro.site ?? Astro.url)} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
   </head>
   <body>
     <header class="cabecera">
       <div class="contenedor cabecera__fila">
-        <a href="/" class="cabecera__logo"><Logo /></a>
+        <a href="/" class="cabecera__logo" aria-label="Cultura Freestyle, inicio"><Logo /></a>
         <nav class="nav-desktop" aria-label="Principal">
           {nav.map((n) => (
             <a href={n.href} aria-current={n.activo ? 'page' : undefined}>{n.label}</a>

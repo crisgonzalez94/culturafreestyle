@@ -76,12 +76,20 @@ import { SITIO } from '../data/sitio';
         <textarea name="Detalles" rows="4" placeholder="Nivel, costo, recorrido, qué llevar…"></textarea>
       </label>
 
+      <!-- Honeypot anti-spam: oculto para personas, los bots lo completan -->
+      <label class="trampa" aria-hidden="true">
+        <span>Tu web</span>
+        <input name="web" tabindex="-1" autocomplete="off" />
+      </label>
+
       <p class="error" id="error" role="alert" hidden></p>
+      <p class="exito" id="exito" role="status" hidden></p>
 
       <div class="enviar">
-        {SITIO.whatsapp && <button class="btn btn--rosa" type="submit" value="whatsapp">Enviar por WhatsApp</button>}
+        <button class="btn btn--rosa" type="submit" value="api">Enviar evento</button>
+        {SITIO.whatsapp && <button class="btn" type="submit" value="whatsapp">Enviar por WhatsApp</button>}
         {SITIO.email && <button class="btn" type="submit" value="email">Enviar por mail</button>}
-        <button class:list={['btn', { 'btn--rosa': !SITIO.whatsapp }]} type="submit" value="copiar">Copiar mensaje</button>
+        <button class="btn" type="submit" value="copiar">Copiar mensaje</button>
       </div>
       {SITIO.instagram && (
         <p class="nota">
@@ -95,6 +103,19 @@ import { SITIO } from '../data/sitio';
 <script define:vars={{ whatsapp: SITIO.whatsapp, email: SITIO.email }}>
   const form = document.getElementById('form');
   const error = document.getElementById('error');
+  const exito = document.getElementById('exito');
+
+  const CAMPOS = { evento: 'nombre', disciplinas: 'disciplina', fecha: 'fecha', hora: 'hora', lugar: 'lugar', link: 'link' };
+
+  async function mensajeDeError(res) {
+    if (res.status === 429) return 'Mandaste varios eventos seguidos. Esperá un minuto y probá de nuevo.';
+    if (res.status === 422) {
+      const { errors = {} } = await res.json().catch(() => ({}));
+      const campos = [...new Set(Object.keys(errors).map((c) => CAMPOS[c.split('.')[0]] || c))];
+      if (campos.length) return `Revisá estos datos: ${campos.join(', ')}.`;
+    }
+    return 'No pudimos enviar el evento. Probá de nuevo en un rato.';
+  }
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -110,14 +131,54 @@ import { SITIO } from '../data/sitio';
       return;
     }
     error.hidden = true;
+    exito.hidden = true;
 
+    const via = e.submitter?.value;
+
+    if (via === 'api') {
+      const boton = e.submitter;
+      boton.disabled = true;
+      boton.textContent = 'Enviando…';
+      try {
+        const res = await fetch('/api/v1/envios', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({
+            evento: datos.get('Evento'),
+            disciplinas: datos.getAll('Disciplina'),
+            tipo: datos.get('Tipo'),
+            fecha: datos.get('Fecha'),
+            hora: datos.get('Hora'),
+            se_repite: datos.get('Se repite') === 'Sí',
+            lugar: datos.get('Lugar'),
+            ciudad: datos.get('Ciudad'),
+            organiza: datos.get('Organiza'),
+            link: datos.get('Link'),
+            detalles: datos.get('Detalles'),
+            web: datos.get('web'),
+          }),
+        });
+        if (!res.ok) throw new Error(await mensajeDeError(res));
+        form.reset();
+        exito.textContent = '¡Gracias! Nos llegó el evento. Lo revisamos y lo sumamos al calendario.';
+        exito.hidden = false;
+      } catch (err) {
+        error.textContent = err.message;
+        error.hidden = false;
+      } finally {
+        boton.disabled = false;
+        boton.textContent = 'Enviar evento';
+      }
+      return;
+    }
+
+    datos.delete('web');
     const lineas = ['¡Hola! Quiero sumar un evento a Cultura Freestyle:', ''];
     for (const clave of new Set(datos.keys())) {
       const valor = datos.getAll(clave).filter(Boolean).join(', ');
       if (valor) lineas.push(`• ${clave}: ${valor}`);
     }
     const mensaje = lineas.join('\n');
-    const via = e.submitter?.value;
 
     if (via === 'whatsapp') {
       window.open(`https://wa.me/${whatsapp}?text=${encodeURIComponent(mensaje)}`, '_blank');
@@ -228,6 +289,15 @@ import { SITIO } from '../data/sitio';
   .error {
     color: #ff8a9f;
     margin: 0;
+  }
+  .exito {
+    color: var(--azul);
+    font-weight: 600;
+    margin: 0;
+  }
+  .trampa {
+    position: absolute;
+    left: -9999px;
   }
   .enviar {
     display: grid;

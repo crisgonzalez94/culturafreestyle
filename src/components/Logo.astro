@@ -1,65 +1,57 @@
 ---
-// Logo tipográfico provisorio. Cuando tengas los PNG/SVG finales, reemplazalo por un <img>.
+// Logo de Cultura Freestyle.
+// - chico: isotipo "CF" + nombre, para la cabecera.
+// - grande: insignia completa, para el inicio.
+import { Image } from 'astro:assets';
+import insignia from '../assets/logo-badge.png';
+import isotipo from '../assets/logo-cf.png';
+
 interface Props {
   tamano?: 'chico' | 'grande';
 }
 const { tamano = 'chico' } = Astro.props;
 ---
 
-<span class:list={['logo', `logo--${tamano}`]} aria-label="Cultura Freestyle">
-  <svg class="corona" viewBox="0 0 64 32" aria-hidden="true">
-    <path d="M6 26 L12 6 L24 20 L32 4 L40 20 L52 6 L58 26 Z" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"></path>
-  </svg>
-  <span class="cultura" aria-hidden="true">Cultura</span>
-  <span class="freestyle" aria-hidden="true">Freestyle</span>
-</span>
+{tamano === 'grande' ? (
+  <Image
+    class="logo-grande"
+    src={insignia}
+    alt="Cultura Freestyle"
+    widths={[320, 480, 640, 917]}
+    sizes="(min-width: 640px) 380px, 80vw"
+    loading="eager"
+    fetchpriority="high"
+  />
+) : (
+  <span class="logo-chico">
+    <Image src={isotipo} alt="" width={40} height={40} densities={[1, 2, 3]} loading="eager" />
+    <span class="logo-chico__nombre">Cultura <span>Freestyle</span></span>
+  </span>
+)}
 
 <style>
-  .logo {
-    position: relative;
+  .logo-grande {
+    display: block;
+    width: min(80vw, 380px);
+    height: auto;
+    margin-inline: auto;
+  }
+  .logo-chico {
     display: inline-flex;
-    flex-direction: column;
-    line-height: 0.85;
+    align-items: center;
+    gap: 10px;
+  }
+  .logo-chico img {
+    width: 40px;
+    height: 40px;
+  }
+  .logo-chico__nombre {
     font-family: var(--f-marker);
-    transform: rotate(-4deg);
-    padding-top: 0.35em;
-  }
-  .corona {
-    position: absolute;
-    top: -0.05em;
-    left: 38%;
-    width: 1.3em;
-    color: var(--azul);
-    transform: rotate(8deg);
-  }
-  .cultura {
+    font-size: 18px;
+    line-height: 1;
     color: var(--blanco);
-    font-size: 1em;
   }
-  .freestyle {
+  .logo-chico__nombre span {
     color: var(--azul);
-    font-size: 1.15em;
-    margin-left: 0.4em;
-    text-shadow:
-      2px 2px 0 var(--negro),
-      0 0 0 var(--negro);
-    position: relative;
-  }
-  .freestyle::after {
-    content: '';
-    position: absolute;
-    left: -0.2em;
-    right: 0;
-    bottom: -0.12em;
-    height: 0.12em;
-    border-radius: 1em;
-    background: var(--rosa);
-    transform: rotate(-2deg);
-  }
-  .logo--chico {
-    font-size: 20px;
-  }
-  .logo--grande {
-    font-size: clamp(44px, 14vw, 88px);
   }
 </style>
